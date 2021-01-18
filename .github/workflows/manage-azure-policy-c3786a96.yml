@@ -1,0 +1,46 @@
+name: manage-azure-policy-c3786a96
+on:
+  workflow_dispatch:
+    inputs:
+      remarks:
+        description: 'Reason for triggering the workflow run'
+        required: false
+        default: 'Updating Azure Policies'
+
+
+## Uncomment the following if you wish to automatically trigger workflow run with every commit
+#
+#  push:
+#    paths:
+#      - 'policies/Azure_Cosmos_DB_allowed_locations_0473574d-2d43-4217-aefe-941fcdf7e684/**'
+#      - 'policies/Azure_Backup_should_be_enabled_for_Virtual_Machines_013e242c-8828-4970-87b3-ab247555486d/**'
+#      - 'policies/Audit_virtual_machines_without_disaster_recovery_configured_0015ea4d-51ff-4ce3-8d8c-f3f8f0179a56/**'
+#      - 'policies/Managed_identity_should_be_used_in_your_Web_App_2b9ad585-36bc-4615-b300-fd4435808332/**'
+#      - 'initiatives/Audit_machines_with_insecure_password_security_settings_095e4ed9-c835-4ab6-9439-b5644362a06c/**'
+#      - 'initiatives/_Preview_Australian_Government_ISM_PROTECTED_27272c0b-c225-4cc3-b8b0-f2534b093077/**'
+#      - 'initiatives/Enable_Azure_Monitor_for_VMs_55f3eceb-5573-4f18-9695-226972c6d74a/**'
+#      - 'initiatives/Enable_Azure_Monitor_for_Virtual_Machine_Scale_Sets_75714362-cae7-409e-9b99-a8e5075b7fad/**'
+#      - .github/workflows/manage-azure-policy-c3786a96.yml
+jobs:
+  apply-azure-policy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS_c3786a96}}
+        allow-no-subscriptions: true
+    - name: Create or Update Azure Policies
+      uses: azure/manage-azure-policy@v0
+      with:
+        paths: |
+          policies/Azure_Cosmos_DB_allowed_locations_0473574d-2d43-4217-aefe-941fcdf7e684/**
+          policies/Azure_Backup_should_be_enabled_for_Virtual_Machines_013e242c-8828-4970-87b3-ab247555486d/**
+          policies/Audit_virtual_machines_without_disaster_recovery_configured_0015ea4d-51ff-4ce3-8d8c-f3f8f0179a56/**
+          policies/Managed_identity_should_be_used_in_your_Web_App_2b9ad585-36bc-4615-b300-fd4435808332/**
+          initiatives/Audit_machines_with_insecure_password_security_settings_095e4ed9-c835-4ab6-9439-b5644362a06c/**
+          initiatives/_Preview_Australian_Government_ISM_PROTECTED_27272c0b-c225-4cc3-b8b0-f2534b093077/**
+          initiatives/Enable_Azure_Monitor_for_VMs_55f3eceb-5573-4f18-9695-226972c6d74a/**
+          initiatives/Enable_Azure_Monitor_for_Virtual_Machine_Scale_Sets_75714362-cae7-409e-9b99-a8e5075b7fad/**
