@@ -1,0 +1,40 @@
+{
+  "type": "Microsoft.Authorization/policyDefinitions",
+  "name": "restrict-public-ips-policyDef",
+  "properties": {
+    "displayName": "Restrict Public IP",
+    "description": "This policy restrict Public IP resource from being associated to a NIC",
+    "metadata": {
+      "version": "1.0.0.0",
+      "category": "Network"
+    },
+    "parameters": {},
+    "policyRule": {
+      "if": {
+        "allOf": [
+          {
+            "field": "type",
+            "equals": "Microsoft.Network/networkInterfaces"
+          },
+          {
+            "anyof": [
+              {
+                "field": "Microsoft.Network/networkInterfaces/ipconfigurations[*].publicIpAddress.id",
+                "exists": true
+              },
+              {
+                "not": {
+                  "field": "Microsoft.Network/networkInterfaces/ipconfigurations[*].publicIpAddress.id",
+                  "exists": false
+                }
+              }
+            ]
+          }
+        ]
+      },
+      "then": {
+        "effect": "deny"
+      }
+    }
+  }
+}
