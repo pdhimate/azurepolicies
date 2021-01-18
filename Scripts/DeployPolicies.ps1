@@ -62,19 +62,10 @@ param (
 # Local functions
 ##########################################################
 
-# Login/Connect to Azure
-function ProcessAzureSignIn {
-    Connect-AzAccount
-    $Script:context = Get-AzContext 
-    $Script:currentTenantId = $context.Tenant.Id
-    $Script:currentSubId = $context.Subscription.Id
-    $Script:currentSubName = $context.Subscription.Name
-}
-
 # Deploys the policy definitions
 function DeployPolicyDefinition {
     [CmdLetBinding()]
-    Param (
+    param (
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployToSub')]
         [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployToMG')]
         [object]$Definition, # JSON object of the Definition.json file
@@ -88,12 +79,13 @@ function DeployPolicyDefinition {
     Write-Output "Starting deployment of all polices"
 
     # Extract Name, DisplayName, etc from policy definition
+    # This is needed since the New-AzPolicyDefinition CMDLET is currently unable to pick them from policy.json file 
     $policyName = $Definition.name
     $policyDisplayName = $Definition.properties.displayName
     $policyDescription = $Definition.properties.description
-    $policyParameters = $Definition.properties.parameters | convertTo-Json
-    $PolicyRule = $Definition.properties.policyRule | convertTo-Json -Depth 15
-    $policyMetaData = $Definition.properties.metadata | convertTo-Json
+    $policyParameters = $Definition.properties.parameters | convertTo-Json -Depth 25
+    $PolicyRule = $Definition.properties.policyRule | convertTo-Json -Depth 25
+    $policyMetaData = $Definition.properties.metadata | convertTo-Json -Depth 25
     
     # create deployment parameters hastable
     $deployParams = @{
@@ -107,7 +99,7 @@ function DeployPolicyDefinition {
 
     # deploy to either subcription or Management group
     Write-Output "'DeployPolicyDefinition' function parameter set name: '$($PSCmdlet.ParameterSetName)'"
-    If ($PSCmdlet.ParameterSetName -eq 'deployToSub') {
+    if ($PSCmdlet.ParameterSetName -eq 'deployToSub') {
         Write-Output "Adding SubscriptionId to the input parameters for New-AzPolicyDefinition cmdlet"
         $deployParams.Add('SubscriptionId', $subscriptionId)
     }
@@ -131,67 +123,37 @@ $ErrorActionPreference = 'STOP'
 # Global try
 try {
     
-    # Ensure signed into Azure
-    if ($silent) {
-        Write-Output "Running script in silent mode (no interactive login)."
+    # Get sign-in context and init
+    $context = Get-AzContext
+    if (!$context) {
+        Write-Error "You are not signed in/connected to Azure."
     }
-    try {
-        $context = Get-AzContext
-        if ($context) {
-            Write-output "You are currently signed in to tenant '$currentTenantId', subscription '$currentSubName'  using account '$($context.Account.Id).'"
-            if (!$silent) {
-                Write-Output "Press any key to continue using current sign-in session or Esc to login using another user account."
-                $KeyPress = $host.UI.RawUI.ReadKey("NoEcho,IncludeKeyDown")
-                If ($KeyPress.virtualKeyCode -eq 27) {
-                    # sign out from existig context
-                    Disconnect-AzAccount -AzureContext $context
-                    # sign in again
-                    ProcessAzureSignIn
-                }
-            } 
-        }
-        else {
-            if (!$silent) {
-                Write-Output "You are currently not signed in to Azure. Please sign in from the pop-up window."
-                ProcessAzureSignIn
-            }
-            else {
-                throw "Please sign-in/connect to Azure first."
-            }
-        }
-        $currentTenantId = $context.Tenant.Id
-        $currentSubId = $context.Subscription.Id
-        $currentSubName = $context.Subscription.Name
-    }
-    catch {
-        if (!$silent) {
-            # sign in
-            ProcessAzureSignIn
-        }
-        else {
-            Throw "You are not signed in to Azure!"
-        }
-    }
+    $currentTenantId = $context.Tenant.Id
+    $currentSubId = $context.Subscription.Id
+    $currentSubName = $context.Subscription.Name
+    Write-Output "Connected to tenant '$currentTenantId', subscription '$currentSubName' ($currentSubId))"
 
     # Read all definitions into an array
-    if ($PSCmdlet.ParameterSetName -eq 'deployDirToMG' -or $PSCmdlet.ParameterSetName -eq 'deployDirToSub') {
+    if ($PSCmdlet.ParameterSetName -eq 'deployDirToMG' `
+            -or $PSCmdlet.ParameterSetName -eq 'deployDirToSub') {
+        Write-Output "Folder path: '$folderPath'"
         if ($Recurse) {
-            Write-Output "A folder path with -Recurse switch is used. Retrieving all JSON files in the folder and its sub folders."
-            $definitionFile = (Get-ChildItem -Path $folderPath -File -Filter '*.json' -Recurse).FullName
-            Write-Output "Number of JSON files located in folder '$folderPath': $($definitionFile.count)."
+            Write-Output "Recursing through all *.json files in the folder and its sub-folders."
+            $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*.json' -Recurse).FullName
+            Write-Output "Found $($definitionFiles.count) *.json files"
         }
         else {
-            Write-Output "A folder path is used. Retrieving all JSON files in the folder."
-            $definitionFile = (Get-ChildItem -Path $folderPath -File -Filter '*.json').FullName
-            Write-Output "Number of JSON files located in folder '$folderPath': $($definitionFile.count)."
+            Write-Output "Retrieving all *.json files in the folder."
+            $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*.json').FullName
+            Write-Output "Found $($definitionFiles.count) *.json files"
         }
     }
     $Definitions = @()
-    foreach ($file in $definitionFile) {
-        Write-Output "Processing '$file'..."
+    foreach ($file in $definitionFiles) {
+        Write-Output "Parsing '$file'..."
         $objDef = Get-Content -path $file | Convertfrom-Json
         if ($objDef.properties.policyDefinitions) {
-            Write-Output "'$file' is a policy initiative definition. policy initiatives are not supported by this script."
+            Write-Error "'$file' is a policy initiative definition which is not supported by this script."
         }
         elseif ($objDef.properties.policyRule) {
             Write-Output "'$file' contains a policy definition. It will be deployed."
