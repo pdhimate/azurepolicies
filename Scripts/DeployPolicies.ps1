@@ -1,6 +1,6 @@
 <#
   .SYNOPSIS
-    Deploy Azure Policy definitions in bulk.
+    Deploys Azure Policies. Ensure that you do a Connect-AzAccount before runnning.
   .DESCRIPTION
     This script deploys Azure Policy definitions in bulk. You can deploy one or more policy definitions by specifying the file paths, or all policy definitions in a folder by specifying a folder path.
   .PARAMETER DefinitionFile
@@ -12,15 +12,13 @@
   .PARAMETER subscriptionId
     When deploying policy definitions to a subscription, specify the subscription Id.
   .PARAMETER -managementGroupName
-    When deploying policy definitions to a management group, specify the management group name (not the display name).
-  .PARAMETER silent
     Use this switch to use the surpress login prompt. The script will use the current Azure context (logon session) and it will fail if currently not logged on. Use this switch when using the script in CI/CD pipelines.
   .EXAMPLE
-    ./deployPolicies.ps1 -definitionFile C:\Temp\azurepolicy.json -subscriptionId cd45c044-18c4-4abe-a908-1e0b79f45003
-    Deploys a single policy definition to a subscription (interactive mode)
+    ./DeployPolicies.ps1 -definitionFile C:\Temp\azurepolicy.json -subscriptionId fd15c016-18c4-4abe-a908-1e0b79f45003
+    Deploys a single policy definition to a subscription 
   .EXAMPLE
-    ./deployPolicies.ps1 -FolderPath C:\Temp -recurse -managementGroupName myMG -silent
-    Deploys all the policy definitions in the specified folder and its sub-folders to a management group (silent mode, i.e. in a CI/CD pipeline)
+    ./DeployPolicies.ps1 -FolderPath C:\Temp -recurse -managementGroupName myMG 
+    Deploys all the policy definitions in the specified folder and its sub-folders to a management group 
 #>
 
 #Requires -Modules 'az.resources'
@@ -49,20 +47,14 @@ param (
     [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToMG')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployDirToMG')]
     [ValidateNotNullOrEmpty()] # must not be null or empty white space
-    [String]$managementGroupName ,
-
-    [Parameter(Mandatory = $false, ParameterSetName = 'deployDirToSub', HelpMessage = 'Silent mode. When used, no interative prompt for sign in')]
-    [Parameter(Mandatory = $false, ParameterSetName = 'deployDirToMG', HelpMessage = 'Silent mode. When used, no interative prompt for sign in')]
-    [Parameter(Mandatory = $false, ParameterSetName = 'deployFilesToSub', HelpMessage = 'Silent mode. When used, no interative prompt for sign in')]
-    [Parameter(Mandatory = $false, ParameterSetName = 'deployFilesToMG', HelpMessage = 'Silent mode. When used, no interative prompt for sign in')]
-    [Switch]$silent
+    [String]$managementGroupName 
 )
 
 ##########################################################
 # Local functions
 ##########################################################
 
-# Deploys the policy definitions
+# Deploys a policy definition
 function DeployPolicyDefinition {
     [CmdLetBinding()]
     param (
@@ -74,9 +66,10 @@ function DeployPolicyDefinition {
         [String]$subscriptionId,
         
         [Parameter(Mandatory = $true, ParameterSetName = 'deployToMG')]
-        [String]$managementGroupName
+        [String]$managementGroupName,
+        [Hashtable] $Output
     )
-    Write-Output "Starting deployment of all polices"
+    Write-Output "Starting deployment of policy"
 
     # Extract Name, DisplayName, etc from policy definition
     # This is needed since the New-AzPolicyDefinition CMDLET is currently unable to pick them from policy.json file 
@@ -86,6 +79,8 @@ function DeployPolicyDefinition {
     $policyParameters = $Definition.properties.parameters | convertTo-Json -Depth 25
     $PolicyRule = $Definition.properties.policyRule | convertTo-Json -Depth 25
     $policyMetaData = $Definition.properties.metadata | convertTo-Json -Depth 25
+    
+    Write-Output "Policy Name: $policyName"
     
     # create deployment parameters hastable
     $deployParams = @{
@@ -100,17 +95,24 @@ function DeployPolicyDefinition {
     # deploy to either subcription or Management group
     Write-Output "'DeployPolicyDefinition' function parameter set name: '$($PSCmdlet.ParameterSetName)'"
     if ($PSCmdlet.ParameterSetName -eq 'deployToSub') {
-        Write-Output "Adding SubscriptionId to the input parameters for New-AzPolicyDefinition cmdlet"
+        Write-Output "Deploying to Subscription $subscriptionId"
         $deployParams.Add('SubscriptionId', $subscriptionId)
     }
     else {
-        Write-Output "Adding ManagementGroupName to the input parameters for New-AzPolicyDefinition cmdlet"
+        Write-Output "Deploying to ManagementGroup $managementGroupName"
         $deployParams.Add('ManagementGroupName', $managementGroupName)
     }
     $deployResult = New-AzPolicyDefinition @deployParams
     $deployResult
 
-    Write-Output "Deployment of all polices complete"
+    Write-Output "Deployed $policyName "
+
+    if ($Output) {
+        $Output.PolicyDefinitionId = $deployResult.PolicyDefinitionId
+        $Output.PolicyName = $deployResult.ResourceName
+        $Output.ResourceId = $deployResult.ResourceId
+        $Output.Name = $deployResult.Name
+    }
 }
 
 ##########################################################
@@ -165,12 +167,13 @@ try {
     }
 
     # Deploy definitions
-    $arrDeployResults = @()
-    Foreach ($objDef in $Definitions) {
+    $deployOutputs = @()
+    $deployedCount = 0;
+    foreach ($objDef in $Definitions) {
         $params = @{
             Definition = $objDef
         }
-        If ($PSCmdlet.ParameterSetName -eq 'deployDirToSub' -or $PSCmdlet.ParameterSetName -eq 'deployFilesToSub') {
+        if ($PSCmdlet.ParameterSetName -eq 'deployDirToSub' -or $PSCmdlet.ParameterSetName -eq 'deployFilesToSub') {
             Write-Output "Deploying policy '$($objDef.name)' to subscription '$subscriptionId'"
             $params.Add('subscriptionId', $subscriptionId)
         }
@@ -178,15 +181,27 @@ try {
             Write-Output "Deploying policy '$($objDef.name)' to management group '$managementGroupName'"
             $params.Add('managementGroupName', $managementGroupName)
         }
-        $deployResult = DeployPolicyDefinition @params
-        $arrDeployResults += $deployResult
+        $Output = New-Object -TypeName Hashtable
+        $params.Add('Output', $Output)
+        DeployPolicyDefinition @params
+        $deployOutputs += $Output
+
+        $deployedCount++
+        Write-Output "Deployed $deployedCount Policies so far."
     }
-    $arrDeployResults
+
+    # Display output
+    Write-Output "####################################################"
+    Write-Output "Deployment complete"
+    Write-Output "####################################################"
 }
 
 # Global catch
 catch {
-    Write-Error "Something went wrong! Details below."
-    $_
+    $errors = $_
+    Write-Output "Something went wrong! Details below."
+    Write-Output $errors
+    Write-Error $errors
+
 }
 
