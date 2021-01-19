@@ -105,7 +105,7 @@ function DeployPolicyDefinition {
     $deployResult = New-AzPolicyDefinition @deployParams
     $deployResult
 
-    Write-Output "Deployed $policyName "
+    Write-Output "Deployed policy named: $policyName "
 
     if ($Output) {
         $Output.PolicyDefinitionId = $deployResult.PolicyDefinitionId
