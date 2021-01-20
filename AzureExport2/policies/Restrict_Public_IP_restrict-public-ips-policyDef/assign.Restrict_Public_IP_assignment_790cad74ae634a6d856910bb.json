@@ -1,0 +1,25 @@
+{
+ "sku": {
+  "name": "A0",
+  "tier": "Free"
+ },
+ "properties": {
+  "displayName": "Restrict Public IP assignment",
+  "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyDefinitions/restrict-public-ips-policyDef",
+  "scope": "/providers/Microsoft.Management/managementGroups/moveme-management-group",
+  "notScopes": [],
+  "parameters": {},
+  "metadata": {
+   "assignedBy": "Piyush Dhimate",
+   "parameterScopes": {},
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-20T00:43:54.9714653Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "enforcementMode": "Default"
+ },
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyAssignments/790cad74ae634a6d856910bb",
+ "type": "Microsoft.Authorization/policyAssignments",
+ "name": "790cad74ae634a6d856910bb"
+}
