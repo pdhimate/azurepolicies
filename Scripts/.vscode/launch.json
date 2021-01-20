@@ -15,7 +15,7 @@
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Local Debug: Deploy Polcies",
+            "name": "Local Debug: Deploy Policies",
             "type": "PowerShell",
             "request": "launch",
             "script": "${workspaceFolder}/DeployPolicies.ps1",
