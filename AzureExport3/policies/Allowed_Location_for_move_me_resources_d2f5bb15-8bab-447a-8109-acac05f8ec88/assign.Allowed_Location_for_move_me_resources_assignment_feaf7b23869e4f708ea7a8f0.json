@@ -1,0 +1,43 @@
+{
+ "sku": {
+  "name": "A0",
+  "tier": "Free"
+ },
+ "properties": {
+  "displayName": "Allowed Location for move me resources assignment",
+  "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyDefinitions/d2f5bb15-8bab-447a-8109-acac05f8ec88",
+  "scope": "/providers/Microsoft.Management/managementGroups/moveme-management-group",
+  "notScopes": [],
+  "parameters": {
+   "allowedLocations": {
+    "value": [
+     "australia",
+     "australiacentral",
+     "australiacentral2",
+     "australiaeast",
+     "australiasoutheast"
+    ]
+   }
+  },
+  "metadata": {
+   "assignedBy": "Piyush Dhimate",
+   "parameterScopes": {
+    "allowedLocations": "/providers/Microsoft.Management/managementGroups/moveme-management-group"
+   },
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-20T23:20:30.5513024Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "enforcementMode": "Default"
+ },
+ "identity": {
+  "principalId": "9d200af7-213d-4a42-b5e7-666bad2819f1",
+  "tenantId": "e68a317f-d4e8-4c7a-bf89-8ec20c8db96f",
+  "type": "SystemAssigned"
+ },
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyAssignments/feaf7b23869e4f708ea7a8f0",
+ "type": "Microsoft.Authorization/policyAssignments",
+ "name": "feaf7b23869e4f708ea7a8f0",
+ "location": "australiaeast"
+}

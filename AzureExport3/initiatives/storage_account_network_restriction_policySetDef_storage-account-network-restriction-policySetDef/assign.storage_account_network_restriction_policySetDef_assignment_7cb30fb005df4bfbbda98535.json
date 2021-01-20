@@ -1,0 +1,25 @@
+{
+ "sku": {
+  "name": "A0",
+  "tier": "Free"
+ },
+ "properties": {
+  "displayName": "storage account network restriction policySetDef assignment",
+  "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policySetDefinitions/storage-account-network-restriction-policySetDef",
+  "scope": "/providers/Microsoft.Management/managementGroups/moveme-management-group",
+  "notScopes": [],
+  "parameters": {},
+  "metadata": {
+   "assignedBy": "Piyush Dhimate",
+   "parameterScopes": {},
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-20T00:44:43.7550785Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "enforcementMode": "Default"
+ },
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyAssignments/7cb30fb005df4bfbbda98535",
+ "type": "Microsoft.Authorization/policyAssignments",
+ "name": "7cb30fb005df4bfbbda98535"
+}

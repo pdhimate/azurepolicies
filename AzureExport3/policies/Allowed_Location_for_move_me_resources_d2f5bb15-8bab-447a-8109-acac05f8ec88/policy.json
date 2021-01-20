@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "displayName": "Allowed Location for move me resources",
+  "policyType": "Custom",
+  "mode": "All",
+  "description": "locations must be in Australia",
+  "metadata": {
+   "category": "Custom",
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-20T23:19:25.8828301Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "parameters": {
+   "allowedLocations": {
+    "type": "Array",
+    "metadata": {
+     "displayName": "Allowed locations",
+     "description": "The list of allowed locations for resources.",
+     "strongType": "location"
+    }
+   }
+  },
+  "policyRule": {
+   "if": {
+    "not": {
+     "field": "location",
+     "in": "[parameters('allowedLocations')]"
+    }
+   },
+   "then": {
+    "effect": "deny"
+   }
+  }
+ },
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyDefinitions/d2f5bb15-8bab-447a-8109-acac05f8ec88",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "d2f5bb15-8bab-447a-8109-acac05f8ec88"
+}
