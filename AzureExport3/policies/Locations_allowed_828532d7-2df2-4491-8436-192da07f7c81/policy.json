@@ -1,0 +1,39 @@
+{
+ "properties": {
+  "displayName": "Locations allowed",
+  "policyType": "Custom",
+  "mode": "All",
+  "description": "dev test subscription allowed locations",
+  "metadata": {
+   "category": "Custom Provider",
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-20T23:43:18.072735Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "parameters": {
+   "allowedLocations": {
+    "type": "Array",
+    "metadata": {
+     "displayName": "Allowed locations",
+     "description": "The list of allowed locations for Dev Test resources.",
+     "strongType": "location"
+    }
+   }
+  },
+  "policyRule": {
+   "if": {
+    "not": {
+     "field": "location",
+     "in": "[parameters('allowedLocations')]"
+    }
+   },
+   "then": {
+    "effect": "audit"
+   }
+  }
+ },
+ "id": "/subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2/providers/Microsoft.Authorization/policyDefinitions/828532d7-2df2-4491-8436-192da07f7c81",
+ "type": "Microsoft.Authorization/policyDefinitions",
+ "name": "828532d7-2df2-4491-8436-192da07f7c81"
+}
