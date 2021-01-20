@@ -5,11 +5,23 @@
     "version": "0.2.0",
     "configurations": [
         {
+            "name": "Local Debug: Deploy Initiative",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/DeployInitiative.ps1",
+            "args": [
+                "-definitionFile C:\\Work\\GitHub\\azurepolicies\\AzureExport\\initiatives\\storage-account-network-restriction-policySetDef\\policySet.json -managementGroupName moveme-management-group -PolicyLocations @{policyLocation1 = '/providers/Microsoft.Management/managementGroups/moveme-management-group'}"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
             "name": "Local Debug: Deploy Polcies",
             "type": "PowerShell",
             "request": "launch",
             "script": "${workspaceFolder}/DeployPolicies.ps1",
-            "args": ["-FolderPath C:\\Work\\GitHub\\azurepolicies\\AzureExport\\policies -recurse -managementGroupName moveme-management-group"],
+            "args": [
+                "-FolderPath C:\\Work\\GitHub\\azurepolicies\\AzureExport\\policies -recurse -managementGroupName moveme-management-group"
+            ],
             "cwd": "${workspaceFolder}"
         }
     ]

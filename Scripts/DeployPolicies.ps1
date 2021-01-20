@@ -51,7 +51,7 @@ param (
 )
 
 ##########################################################
-# Local functions
+# Local functions start
 ##########################################################
 
 # Deploys a policy definition
@@ -67,6 +67,7 @@ function DeployPolicyDefinition {
         
         [Parameter(Mandatory = $true, ParameterSetName = 'deployToMG')]
         [String]$managementGroupName,
+
         [Hashtable] $Output
     )
     Write-Output "Starting deployment of policy"
@@ -107,6 +108,7 @@ function DeployPolicyDefinition {
 
     Write-Output "Deployed policy named: $policyName "
 
+    # Set output
     if ($Output) {
         $Output.PolicyDefinitionId = $deployResult.PolicyDefinitionId
         $Output.PolicyName = $deployResult.ResourceName
@@ -128,14 +130,14 @@ try {
     # Get sign-in context and init
     $context = Get-AzContext
     if (!$context) {
-        Write-Error "You are not signed in/connected to Azure."
+        Write-Error "You are not signed in/connected to Azure. Use Connect-AzAccount"
     }
     $currentTenantId = $context.Tenant.Id
     $currentSubId = $context.Subscription.Id
     $currentSubName = $context.Subscription.Name
     Write-Output "Connected to tenant '$currentTenantId', subscription '$currentSubName' ($currentSubId))"
 
-    # Read all definitions into an array
+    # Read files from current folder and subfodlers, if recursive flag was specified
     if ($PSCmdlet.ParameterSetName -eq 'deployDirToMG' `
             -or $PSCmdlet.ParameterSetName -eq 'deployDirToSub') {
         Write-Output "Folder path: '$folderPath'"
@@ -150,7 +152,10 @@ try {
             Write-Output "Found $($definitionFiles.count) *.json files"
         }
     }
+   
+    # Read all definitions into an array
     $Definitions = @()
+    Write-Output "Validating Policy Definition files"
     foreach ($file in $definitionFiles) {
         Write-Output "Parsing '$file'..."
         $objDef = Get-Content -path $file | Convertfrom-Json
@@ -162,7 +167,7 @@ try {
             $Definitions += $objDef
         }
         else {
-            Write-Output "Unable to parse '$file'. It is not a policy definition file. Content unrecognised."
+            Write-Error "Unable to parse '$file'. It is not a policy definition file. Content unrecognised."
         }
     }
 
@@ -191,9 +196,7 @@ try {
     }
 
     # Display output
-    Write-Output "####################################################"
-    Write-Output "Deployment complete"
-    Write-Output "####################################################"
+    Write-Output "Deployment of Policies complete"
 }
 
 # Global catch
@@ -201,7 +204,6 @@ catch {
     $errors = $_
     Write-Output "Something went wrong! Details below."
     Write-Output $errors
-    Write-Error $errors
-
+    Write-Error $errors # causes script to fail
 }
 

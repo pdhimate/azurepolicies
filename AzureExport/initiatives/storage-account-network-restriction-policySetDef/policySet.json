@@ -1,0 +1,17 @@
+{
+  "name": "storage-account-network-restriction-policySetDef",
+  "properties": {
+    "displayName": "storage account network restriction policySetDef",
+    "description": "This is a custom Initiative to restrict Storage Account access",
+    "metadata": {
+      "version": "1.0.0.0",
+      "category": "Custom"
+    },
+    "parameters": {},
+    "policyDefinitions": [
+      {
+        "policyDefinitionId": "{policyLocation1}/providers/Microsoft.Authorization/policyDefinitions/restrict-public-ips-policyDef"
+      }
+    ]
+  }
+}
