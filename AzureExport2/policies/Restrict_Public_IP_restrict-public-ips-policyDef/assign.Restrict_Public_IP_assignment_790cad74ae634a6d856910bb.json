@@ -9,17 +9,24 @@
   "scope": "/providers/Microsoft.Management/managementGroups/moveme-management-group",
   "notScopes": [],
   "parameters": {},
+  "description": "",
   "metadata": {
    "assignedBy": "Piyush Dhimate",
    "parameterScopes": {},
    "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
    "createdOn": "2021-01-20T00:43:54.9714653Z",
-   "updatedBy": null,
-   "updatedOn": null
+   "updatedBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "updatedOn": "2021-01-20T00:58:37.2429935Z"
   },
   "enforcementMode": "Default"
  },
+ "identity": {
+  "principalId": "965950a9-8c91-43db-85ea-fdf36d784432",
+  "tenantId": "e68a317f-d4e8-4c7a-bf89-8ec20c8db96f",
+  "type": "SystemAssigned"
+ },
  "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyAssignments/790cad74ae634a6d856910bb",
  "type": "Microsoft.Authorization/policyAssignments",
- "name": "790cad74ae634a6d856910bb"
+ "name": "790cad74ae634a6d856910bb",
+ "location": "australiaeast"
 }
