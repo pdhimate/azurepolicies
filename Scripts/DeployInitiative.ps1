@@ -69,7 +69,7 @@ param (
     # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
     # policy.json will look like: {initiativeLocation}/providers/Microsoft.Authorization/policySetDefinitions/storage-account-network-restriction-policySetDef
     # this script will replace {initiativeLocation} with the specified value (like shown in e.g.)
-    # If this is not being used just specify the value to be empty string OR do not use {initiativeLocation} in the policySet.json
+    # If this is not to be used then specify the value to be empty string OR do not use {initiativeLocation} in the policySet.json
     [Parameter(Mandatory = $true, ParameterSetName = 'deployToMG')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployToSub')]
     [String]$initiativeLocation

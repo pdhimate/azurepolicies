@@ -54,7 +54,7 @@ param (
     # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
     # policy.json will look like: {policyLocation}/providers/Microsoft.Authorization/policyDefinitions/d2f5bb15-8bab-447a-8109-acac05f8ec88
     # this script will replace {policyLocation} with the specified value (like shown in e.g.)
-    # If this is not being used just specify the value to be empty string OR do not use {policyLocation} in the policy.json
+    # If this is not to be used then specify the value to be empty string OR do not use {policyLocation} in the policy.json
     [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToMG')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployDirToMG')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToSub')]
