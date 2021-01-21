@@ -382,6 +382,7 @@ try {
         $deployedCount++
 
         # Assign definitions, if any assignment file(s) were found
+       Write-Output "Assiging Policies if any Assignment files are present adjacent to the policy.json file"
         foreach ($assignmentDefJsonObj in $def.AssignmentDefJsonObjs) {
             $assignmentOutput = New-Object -TypeName Hashtable
             AssignPolicyDefinition -PolicyLocation $policyLocation `
