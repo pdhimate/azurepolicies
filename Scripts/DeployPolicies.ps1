@@ -193,11 +193,11 @@ function AssignPolicyDefinition {
 
     # Create params splat
     $assignmentParams = @{
-        Name                  = $name;
-        DisplayName           = $displayName;
-        Scope                 = $scope;
-        PolicyDefinition      = $policy;
-        Location              = $location;
+        Name             = $name;
+        DisplayName      = $displayName;
+        Scope            = $scope;
+        PolicyDefinition = $policy;
+        Location         = $location;
     }
     # parameters obj must be converted to Hashtable
     $assignmentParams.PolicyParameterObject = ConvertPSObjectToHashtable $parameters
@@ -295,13 +295,6 @@ try {
         Write-Output "Parsing '$file'..."
         $rawFile = Get-Content -path $file -Raw 
         
-        # try get assignment file
-        $assignmentFile = $file.Replace("policy.json", "policy.assignment.json")
-        $rawAssignment = $null
-        if ([System.IO.File]::Exists($assignmentFile)) {
-            $rawAssignment = Get-Content -path $assignmentFile -Raw
-        }
-
         # Replace {policyLocation} in policy.json with the specified one, if any
         Write-Output "Replacing {policyLocation} with $policyLocation in policy.json"
         $stringToReplace = "{policyLocation}" # may be present in the *policy.json file
@@ -310,15 +303,33 @@ try {
             Write-Output ("Replaced " + "$stringToReplace :" + $policyLocation)
         }
        
-        # Replace {policyLocation} in policy.assignment.json with the specified one, if any
-        if ($rawAssignment) {
+        # Try to get all adjacent assignment files
+        $folder = Split-Path -parent $file
+        $assignmentFiles = (Get-ChildItem -Path $folder -File -Filter '*policy.assignment.json').FullName
+        $assignmentDefJsonObjs = @()
+        foreach ($assignmentFile in $assignmentFiles) {
+            
+            # Read assignment file
+            $rawAssignment = $null
+            if ([System.IO.File]::Exists($assignmentFile)) {
+                $rawAssignment = Get-Content -path $assignmentFile -Raw
+            }
+            if (!$rawAssignment) {
+                continue
+            }
+
+            # Replace {policyLocation} in policy.assignment.json with the specified one, if any
             Write-Output "Replacing {policyLocation} with $policyLocation in policy.assignment.json"
             $stringToReplace = "{policyLocation}" # may be present in the *policy.assignment.json file
             if ($rawAssignment.Contains($stringToReplace)) {
                 $rawAssignment = $rawAssignment.Replace($stringToReplace, $policyLocation)
                 Write-Output ("Replaced " + "$stringToReplace :" + $policyLocation)
             }
-        }
+
+            # Convert to json obj and store in array 
+            $assignmentDefJsonObj = Convertfrom-Json -InputObject $rawAssignment
+            $assignmentDefJsonObjs += $assignmentDefJsonObj
+        } 
         
         # Validate contents 
         $objDef = Convertfrom-Json -InputObject $rawFile
@@ -330,10 +341,9 @@ try {
             $def = @{
                 PolicyDefJsonObj = $objDef;
             }
-            if ($rawAssignment) {
-                Write-Output "'$file' contains a policy assignment file adjacent, as a sibling"
-                $assignmentDefJsonObj = Convertfrom-Json -InputObject $rawAssignment
-                $def.AssignmentDefJsonObj = $assignmentDefJsonObj
+            if ($assignmentDefJsonObjs.Count -gt 0) {
+                Write-Output "'$file' contains a policy assignment file(s) adjacent, as a sibling"
+                $def.AssignmentDefJsonObjs = $assignmentDefJsonObjs
             }
             $Definitions += $def
         }
@@ -366,18 +376,19 @@ try {
         
         # Create output
         $Output = @{
-            PolicyOutput = $PolicyOutput;
+            PolicyOutput      = $PolicyOutput;
+            AssignmentOutputs = @();
         }
         $deployedCount++
 
-        # Assign definition, if any assignment file was found
-        if ($def.AssignmentDefJsonObj) {
+        # Assign definitions, if any assignment file(s) were found
+        foreach ($assignmentDefJsonObj in $def.AssignmentDefJsonObjs) {
             $assignmentOutput = New-Object -TypeName Hashtable
             AssignPolicyDefinition -PolicyLocation $policyLocation `
-                -AssignmentJsonObj $def.AssignmentDefJsonObj `
+                -AssignmentJsonObj $assignmentDefJsonObj `
                 -Output $assignmentOutput
 
-            $Output.AssignmentOutput = $assignmentOutput
+            $Output.AssignmentOutputs += $assignmentOutput
             $assignedCount++
         }
 

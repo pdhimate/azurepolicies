@@ -1,0 +1,21 @@
+{
+  "properties": {
+    "displayName": "Locations allowed2",
+    "policyDefinitionId": "{policyLocation}/providers/Microsoft.Authorization/policyDefinitions/locations-allowed",
+    "scope": "{policyLocation}",
+    "notScopes": [],
+    "parameters": {
+      "allowedLocations": [
+        "northeurope",
+        "westeurope",
+        "australia",
+        "australiacentral",
+        "australiacentral2",
+        "australiaeast",
+        "australiasoutheast"
+      ]
+    },
+    "enforcementMode": "Default"
+  },
+  "name": "locations-allowed2",
+}
