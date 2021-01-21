@@ -3,7 +3,7 @@
     Deploys Azure Policies. Ensure that you do a Connect-AzAccount before runnning.
   .DESCRIPTION
     This script deploys Azure Policy definitions in bulk. You can deploy one or more policy definitions by specifying the file paths, or all policy definitions in a folder by specifying a folder path.
-  .PARAMETER DefinitionFile
+  .PARAMETER DefinitionFiles
     path to the Policy Definition file. Supports multiple paths using array.
   .PARAMETER FolderPath
     Path to a folder that contains one or more policy definition files.
@@ -14,7 +14,7 @@
   .PARAMETER -managementGroupName
     Use this switch to use the surpress login prompt. The script will use the current Azure context (logon session) and it will fail if currently not logged on. Use this switch when using the script in CI/CD pipelines.
   .EXAMPLE
-    ./DeployPolicies.ps1 -definitionFile C:\Temp\azurepolicy.json -subscriptionId fd15c016-18c4-4abe-a908-1e0b79f45003
+    ./DeployPolicies.ps1 -definitionFiles C:\Temp\azurepolicy.json -subscriptionId fd15c016-18c4-4abe-a908-1e0b79f45003
     Deploys a single policy definition to a subscription 
   .EXAMPLE
     ./DeployPolicies.ps1 -FolderPath C:\Temp -recurse -managementGroupName myMG 
@@ -28,7 +28,7 @@ param (
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployFilesToSub', HelpMessage = 'Specify the file paths for the policy definition files.')]
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployFilesToMG', HelpMessage = 'Specify the file paths for the policy definition files.')]
     [ValidateScript( { test-path $_ })]
-    [String[]]$definitionFile,
+    [String[]]$definitionFiles,
 
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployDirToSub', HelpMessage = 'Specify the directory path that contains the policy definition files.')]
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployDirToMG', HelpMessage = 'Specify the directory path that contains the policy definition files.')]
