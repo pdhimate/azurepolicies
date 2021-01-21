@@ -5,22 +5,32 @@
     "version": "0.2.0",
     "configurations": [
         {
-            "name": "Local Debug: Deploy Initiative",
+            "name": "Local Debug: Deploy Initiative to MG",
             "type": "PowerShell",
             "request": "launch",
             "script": "${workspaceFolder}/DeployInitiative.ps1",
             "args": [
-                "-definitionFile C:\\Work\\GitHub\\azurepolicies\\AzureExport\\initiatives\\storage-account-network-restriction-policySetDef\\policySet.json -managementGroupName moveme-management-group -PolicyLocations @{policyLocation1 = '/providers/Microsoft.Management/managementGroups/moveme-management-group'}"
+                "-definitionFile C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\initiatives\\storage-account-network-restriction-policySetDef\\policySet.json -managementGroupName moveme-management-group -PolicyLocations @{restrict-public-ips-policyDef-Location = '/providers/Microsoft.Management/managementGroups/moveme-management-group'}"
             ],
             "cwd": "${workspaceFolder}"
         },
         {
-            "name": "Local Debug: Deploy Policies",
+            "name": "Local Debug: Deploy Policies to MG",
             "type": "PowerShell",
             "request": "launch",
             "script": "${workspaceFolder}/DeployPolicies.ps1",
             "args": [
-                "-FolderPath C:\\Work\\GitHub\\azurepolicies\\AzureExport\\policies -recurse -managementGroupName moveme-management-group"
+                "-FolderPath C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\policies -recurse -managementGroupName moveme-management-group -policyLocation '/providers/Microsoft.Management/managementGroups/moveme-management-group'"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Local Debug: Deploy Policies to Subscription",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/DeployPolicies.ps1",
+            "args": [
+                "-FolderPath C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\Dev-Test-Subscription\\policies -recurse -subscriptionId ffad927d-ae53-4617-a608-b0e8e7544bd2 -policyLocation '/subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2'"
             ],
             "cwd": "${workspaceFolder}"
         }

@@ -47,7 +47,19 @@ param (
     [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToMG')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployDirToMG')]
     [ValidateNotNullOrEmpty()] # must not be null or empty white space
-    [String]$managementGroupName 
+    [String]$managementGroupName,
+
+    # Path of the node (Management Group or Subscription) where the Policy definitions will be stored and assigned.
+    # e.g. /providers/Microsoft.Management/managementGroups/moveme-management-group
+    # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
+    # policy.json will look like: {policyLocation}/providers/Microsoft.Authorization/policyDefinitions/d2f5bb15-8bab-447a-8109-acac05f8ec88
+    # this script will replace {policyLocation} with the specified value (like shown in e.g.)
+    [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToMG')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'deployDirToMG')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToSub')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'deployDirToSub')]
+    [ValidateNotNullOrEmpty()] # must not be null or empty white space
+    [String]$policyLocation
 )
 
 ##########################################################
@@ -153,12 +165,23 @@ try {
         }
     }
    
-    # Read all definitions into an array
+    # Update, Validate and Read all definitions into an array
     $Definitions = @()
     Write-Output "Validating Policy Definition files"
     foreach ($file in $definitionFiles) {
         Write-Output "Parsing '$file'..."
-        $objDef = Get-Content -path $file | Convertfrom-Json
+        $rawFile = Get-Content -path $file -Raw 
+        
+        # Replace {policyLocation} with the specified one
+        Write-Output "Replacing {policyLocation} with $policyLocation"
+        $stringToReplace = "{policyLocation}" # may be present in the Policy def json file
+        if ($rawFile.Contains($stringToReplace)) {
+            $rawFile = $rawFile.Replace($stringToReplace, $policyLocation)
+            Write-Output ("Replaced " + "$stringToReplace :" + $policyLocation)
+        }
+        
+        # Validate contents 
+        $objDef = Convertfrom-Json -InputObject $rawFile
         if ($objDef.properties.policyDefinitions) {
             Write-Error "'$file' is a policy initiative definition which is not supported by this script."
         }
