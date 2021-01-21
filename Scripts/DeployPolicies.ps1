@@ -4,7 +4,7 @@
   .DESCRIPTION
     This script deploys Azure Policy definitions in bulk. You can deploy one or more policy definitions by specifying the file paths, or all policy definitions in a folder by specifying a folder path.
   .PARAMETER DefinitionFiles
-    path to the Policy Definition file. Supports multiple paths using array.
+    path (or comma separated paths) to the Policy Definition file(s). Supports multiple paths using array.
   .PARAMETER FolderPath
     Path to a folder that contains one or more policy definition files.
   .PARAMETER Recurse
@@ -50,6 +50,7 @@ param (
     [String]$managementGroupName,
 
     # Path of the node (Management Group or Subscription) where the Policy definitions will be stored and assigned.
+    # This is also the Scope where the Policy would be assigned
     # e.g. /providers/Microsoft.Management/managementGroups/moveme-management-group
     # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
     # policy.json will look like: {policyLocation}/providers/Microsoft.Authorization/policyDefinitions/d2f5bb15-8bab-447a-8109-acac05f8ec88
