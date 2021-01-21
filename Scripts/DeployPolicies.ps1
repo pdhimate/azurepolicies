@@ -3,8 +3,10 @@
     Deploys Azure Policies. Ensure that you do a Connect-AzAccount before runnning.
   .DESCRIPTION
     This script deploys Azure Policy definitions in bulk. You can deploy one or more policy definitions by specifying the file paths, or all policy definitions in a folder by specifying a folder path.
+    Names of the files must end with policy.json and names of the assignment values files (used for assignment) must end with policy.assignment.json
   .PARAMETER DefinitionFiles
     path (or comma separated paths) to the Policy Definition file(s). Supports multiple paths using array.
+    Names of the files must end with policy.json
   .PARAMETER FolderPath
     Path to a folder that contains one or more policy definition files.
   .PARAMETER Recurse
@@ -14,7 +16,7 @@
   .PARAMETER -managementGroupName
     Use this switch to use the surpress login prompt. The script will use the current Azure context (logon session) and it will fail if currently not logged on. Use this switch when using the script in CI/CD pipelines.
   .EXAMPLE
-    ./DeployPolicies.ps1 -definitionFiles C:\Temp\azurepolicy.json -subscriptionId fd15c016-18c4-4abe-a908-1e0b79f45003
+    ./DeployPolicies.ps1 -definitionFiles C:\Temp\vmpolicy.json -subscriptionId fd15c016-18c4-4abe-a908-1e0b79f45003
     Deploys a single policy definition to a subscription 
   .EXAMPLE
     ./DeployPolicies.ps1 -FolderPath C:\Temp -recurse -managementGroupName myMG 
@@ -25,6 +27,7 @@
 
 [CmdLetBinding()]
 param (
+    # Names of the files must end with policy.json
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployFilesToSub', HelpMessage = 'Specify the file paths for the policy definition files.')]
     [Parameter(Mandatory = $true, ValueFromPipeline = $true, ParameterSetName = 'deployFilesToMG', HelpMessage = 'Specify the file paths for the policy definition files.')]
     [ValidateScript( { test-path $_ })]
@@ -130,6 +133,125 @@ function DeployPolicyDefinition {
     }
 }
 
+function AssignPolicyDefinition {
+    param (
+        # Path of the node (Management Group or Subscription) where the Policy will be stored
+        # This is also the Scope where the Policy would be assigned
+        # e.g. /providers/Microsoft.Management/managementGroups/moveme-management-group
+        # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
+        [Parameter(Mandatory = $true)]
+        [string]$PolicyLocation,
+        [object]$AssignmentJsonObj, 
+        [Hashtable]$Output
+    )
+    ## Validate mandatory values from policy.assignment.json 
+    $policyDefinitionId = $AssignmentJsonObj.properties.policyDefinitionId
+    if (!$policyDefinitionId) {
+        Write-Error "policy.assignment.json file must contain a properties.policyDefinitionId property"
+    }
+    $scope = $AssignmentJsonObj.properties.scope
+    if (!$scope) {
+        Write-Error "policy.assignment.json file must contain a properties.scope property"
+    }
+    $enforcementMode = $AssignmentJsonObj.properties.enforcementMode
+    if (!$enforcementMode) {
+        Write-Error "policy.assignment.json file must contain a properties.enforcementMode property"
+    }
+    $name = $AssignmentJsonObj.name
+    if (!$name) {
+        Write-Error "policy.assignment.json file must contain a name property"
+    }
+    $displayName = $AssignmentJsonObj.properties.displayName
+    if (!$displayName) {
+        Write-Error "policy.assignment.json file must contain a properties.displayName property"
+    }
+
+    ## Optional values
+    $notScopes = $AssignmentJsonObj.properties.notScopes # Array of strings with scopes to be excluded
+    $parameters = $AssignmentJsonObj.properties.parameters    # Policy parameters values json obj
+    $location = $AssignmentJsonObj.location    # ManagedIdentity Location, if any
+    
+    # Assigned Identity and Location
+    $isSystemIdentity = $AssignmentJsonObj.identity.type -eq "SystemAssigned"
+    if ($isSystemIdentity) {
+        if (!$location) {
+            Write-Error "policy.assignment.json file must contain a location property if it contains identity property"
+        }
+    }
+
+    $locationStringToReplace = "{policyLocation}"
+    if ($policyDefinitionId.Contains($locationStringToReplace)) {
+        $policyDefinitionId = $policyDefinitionId.Replace($locationStringToReplace, $PolicyLocation)
+        Write-Output "Replaced $stringToReplace with $PolicyLocation in Assignment"
+    }
+
+    # Locate the PolicyDefinition, use Where since the cmdlet returns all policies if it does not find a matching one
+    Write-Output "Finding Policy: $policyDefinitionId"
+    $policy = Get-AzPolicyDefinition -Id $policyDefinitionId | Where-Object { $_.PolicyDefinitionId -eq $policyDefinitionId }
+    Write-Output "Found Policy: "
+    $policy
+
+    # Create params splat
+    $assignmentParams = @{
+        Name                  = $name;
+        DisplayName           = $displayName;
+        Scope                 = $scope;
+        PolicyDefinition      = $policy;
+        Location              = $location;
+    }
+    # parameters obj must be converted to Hashtable
+    $assignmentParams.PolicyParameterObject = ConvertPSObjectToHashtable $parameters
+
+    # Set optional params which must not be specified if null or empty
+    if ($isSystemIdentity) {
+        $assignmentParams.AssignIdentity = $true
+    }
+    if ($notScopes) { 
+        $assignmentParams.NotScope = $notScopes
+    }
+
+    # Assign policy
+    Write-Output "Creating Assignment with parameters:" 
+    $assignmentParams
+    $assignment = New-AzPolicyAssignment @assignmentParams
+    Write-Output "Assignment complete: "
+    $assignment
+
+    # Set output
+    if ($Output) {
+        $Output.Assignment = $assignment
+    }
+}
+
+function ConvertPSObjectToHashtable {
+    param (
+        [Parameter(ValueFromPipeline)]
+        $InputObject
+    )
+
+    if ($null -eq $InputObject) { return $null }
+
+    if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string]) {
+        $collection = @(
+            foreach ($object in $InputObject) { ConvertPSObjectToHashtable $object }
+        )
+
+        Write-Output -NoEnumerate $collection
+    }
+    elseif ($InputObject -is [psobject]) {
+        $hash = @{}
+
+        foreach ($property in $InputObject.PSObject.Properties) {
+            $hash[$property.Name] = ConvertPSObjectToHashtable $property.Value
+        }
+
+        $hash
+    }
+    else {
+        $InputObject
+    }
+}
+
 ##########################################################
 # Local functions end
 ##########################################################
@@ -156,13 +278,13 @@ try {
         Write-Output "Folder path: '$folderPath'"
         if ($Recurse) {
             Write-Output "Recursing through all *.json files in the folder and its sub-folders."
-            $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*.json' -Recurse).FullName
-            Write-Output "Found $($definitionFiles.count) *.json files"
+            $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*policy.json' -Recurse).FullName
+            Write-Output "Found $($definitionFiles.count) *policy.json files"
         }
         else {
             Write-Output "Retrieving all *.json files in the folder."
-            $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*.json').FullName
-            Write-Output "Found $($definitionFiles.count) *.json files"
+            $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*policy.json').FullName
+            Write-Output "Found $($definitionFiles.count) *policy.json files"
         }
     }
    
@@ -173,12 +295,29 @@ try {
         Write-Output "Parsing '$file'..."
         $rawFile = Get-Content -path $file -Raw 
         
-        # Replace {policyLocation} with the specified one, if any
-        Write-Output "Replacing {policyLocation} with $policyLocation"
-        $stringToReplace = "{policyLocation}" # may be present in the Policy.json file
+        # try get assignment file
+        $assignmentFile = $file.Replace("policy.json", "policy.assignment.json")
+        $rawAssignment = $null
+        if ([System.IO.File]::Exists($assignmentFile)) {
+            $rawAssignment = Get-Content -path $assignmentFile -Raw
+        }
+
+        # Replace {policyLocation} in policy.json with the specified one, if any
+        Write-Output "Replacing {policyLocation} with $policyLocation in policy.json"
+        $stringToReplace = "{policyLocation}" # may be present in the *policy.json file
         if ($rawFile.Contains($stringToReplace)) {
             $rawFile = $rawFile.Replace($stringToReplace, $policyLocation)
             Write-Output ("Replaced " + "$stringToReplace :" + $policyLocation)
+        }
+       
+        # Replace {policyLocation} in policy.assignment.json with the specified one, if any
+        if ($rawAssignment) {
+            Write-Output "Replacing {policyLocation} with $policyLocation in policy.assignment.json"
+            $stringToReplace = "{policyLocation}" # may be present in the *policy.assignment.json file
+            if ($rawAssignment.Contains($stringToReplace)) {
+                $rawAssignment = $rawAssignment.Replace($stringToReplace, $policyLocation)
+                Write-Output ("Replaced " + "$stringToReplace :" + $policyLocation)
+            }
         }
         
         # Validate contents 
@@ -187,8 +326,16 @@ try {
             Write-Error "'$file' is a policy initiative definition which is not supported by this script."
         }
         elseif ($objDef.properties.policyRule) {
-            Write-Output "'$file' contains a policy definition. It will be deployed."
-            $Definitions += $objDef
+            Write-Output "'$file' contains a policy definition"
+            $def = @{
+                PolicyDefJsonObj = $objDef;
+            }
+            if ($rawAssignment) {
+                Write-Output "'$file' contains a policy assignment file adjacent, as a sibling"
+                $assignmentDefJsonObj = Convertfrom-Json -InputObject $rawAssignment
+                $def.AssignmentDefJsonObj = $assignmentDefJsonObj
+            }
+            $Definitions += $def
         }
         else {
             Write-Error "Unable to parse '$file'. It is not a policy definition file. Content unrecognised."
@@ -198,25 +345,44 @@ try {
     # Deploy definitions
     $deployOutputs = @()
     $deployedCount = 0;
-    foreach ($objDef in $Definitions) {
+    $assignedCount = 0;
+    foreach ($def in $Definitions) {
+        
+        # Deploy definition
         $params = @{
-            Definition = $objDef
+            Definition = $def.PolicyDefJsonObj
         }
         if ($PSCmdlet.ParameterSetName -eq 'deployDirToSub' -or $PSCmdlet.ParameterSetName -eq 'deployFilesToSub') {
-            Write-Output "Deploying policy '$($objDef.name)' to subscription '$subscriptionId'"
+            Write-Output "Deploying policy '$($def.name)' to subscription '$subscriptionId'"
             $params.Add('subscriptionId', $subscriptionId)
         }
         else {
-            Write-Output "Deploying policy '$($objDef.name)' to management group '$managementGroupName'"
+            Write-Output "Deploying policy '$($def.name)' to management group '$managementGroupName'"
             $params.Add('managementGroupName', $managementGroupName)
         }
-        $Output = New-Object -TypeName Hashtable
-        $params.Add('Output', $Output)
+        $PolicyOutput = New-Object -TypeName Hashtable
+        $params.Add('Output', $PolicyOutput)
         DeployPolicyDefinition @params
-        $deployOutputs += $Output
-
+        
+        # Create output
+        $Output = @{
+            PolicyOutput = $PolicyOutput;
+        }
         $deployedCount++
-        Write-Output "Deployed $deployedCount Policies so far."
+
+        # Assign definition, if any assignment file was found
+        if ($def.AssignmentDefJsonObj) {
+            $assignmentOutput = New-Object -TypeName Hashtable
+            AssignPolicyDefinition -PolicyLocation $policyLocation `
+                -AssignmentJsonObj $def.AssignmentDefJsonObj `
+                -Output $assignmentOutput
+
+            $Output.AssignmentOutput = $assignmentOutput
+            $assignedCount++
+        }
+
+        $deployOutputs += $Output
+        Write-Output "Deployed $deployedCount Policies and Assigned $assignedCount Policies so far."
     }
 
     # Display output
