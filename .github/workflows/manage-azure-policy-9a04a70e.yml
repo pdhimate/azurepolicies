@@ -1,0 +1,34 @@
+name: manage-azure-policy-9a04a70e
+on:
+  workflow_dispatch:
+    inputs:
+      remarks:
+        description: 'Reason for triggering the workflow run'
+        required: false
+        default: 'Updating Azure Policies'
+
+
+## Uncomment the following if you wish to automatically trigger workflow run with every commit
+#
+#  push:
+#    paths:
+#      - 'AzureExport5/policies/Locations_allowed_828532d7-2df2-4491-8436-192da07f7c81/**'
+#      - 'AzureExport5/policies/Allowed_Location_for_move_me_resources_d2f5bb15-8bab-447a-8109-acac05f8ec88/**'
+#      - .github/workflows/manage-azure-policy-9a04a70e.yml
+jobs:
+  apply-azure-policy:
+    runs-on: ubuntu-latest
+    steps:
+    - name: Checkout
+      uses: actions/checkout@v2
+    - name: Login to Azure
+      uses: azure/login@v1
+      with:
+        creds: ${{secrets.AZURE_CREDENTIALS_9a04a70e}}
+        allow-no-subscriptions: true
+    - name: Create or Update Azure Policies
+      uses: azure/manage-azure-policy@v0
+      with:
+        paths: |
+          AzureExport5/policies/Locations_allowed_828532d7-2df2-4491-8436-192da07f7c81/**
+          AzureExport5/policies/Allowed_Location_for_move_me_resources_d2f5bb15-8bab-447a-8109-acac05f8ec88/**
