@@ -1,13 +1,13 @@
 {
  "properties": {
-  "displayName": "Allowed Location for move me resources",
+  "displayName": "Locations allowed",
   "policyType": "Custom",
   "mode": "All",
-  "description": "locations must be in Australia",
+  "description": "dev test subscription allowed locations",
   "metadata": {
-   "category": "Custom",
+   "category": "Custom Provider",
    "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
-   "createdOn": "2021-01-21T23:23:46.5052215Z",
+   "createdOn": "2021-01-21T23:23:48.3733522Z",
    "updatedBy": null,
    "updatedOn": null
   },
@@ -16,7 +16,7 @@
     "type": "Array",
     "metadata": {
      "displayName": "Allowed locations",
-     "description": "The list of allowed locations for resources.",
+     "description": "The list of allowed locations for Dev Test resources.",
      "strongType": "location"
     }
    }
@@ -29,11 +29,11 @@
     }
    },
    "then": {
-    "effect": "deny"
+    "effect": "audit"
    }
   }
  },
- "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyDefinitions/d2f5bb15-8bab-447a-8109-acac05f8ec88",
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyDefinitions/locations-allowed",
  "type": "Microsoft.Authorization/policyDefinitions",
- "name": "d2f5bb15-8bab-447a-8109-acac05f8ec88"
+ "name": "locations-allowed"
 }

@@ -1,0 +1,33 @@
+{
+ "sku": {
+  "name": "A0",
+  "tier": "Free"
+ },
+ "properties": {
+  "displayName": "storage account network restriction policySetDef",
+  "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policySetDefinitions/storage-account-network-restriction-policySetDef",
+  "scope": "/providers/Microsoft.Management/managementGroups/moveme-management-group",
+  "notScopes": [
+   "/subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2"
+  ],
+  "parameters": {},
+  "metadata": {
+   "assignedBy": "Piyush Dhimate",
+   "parameterScopes": {},
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-21T23:25:30.4385119Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "enforcementMode": "Default"
+ },
+ "identity": {
+  "principalId": "8d9bc95d-080e-4de2-a516-54795f9c2416",
+  "tenantId": "e68a317f-d4e8-4c7a-bf89-8ec20c8db96f",
+  "type": "SystemAssigned"
+ },
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyAssignments/1d4f8780de5d42f49e75a2e6",
+ "type": "Microsoft.Authorization/policyAssignments",
+ "name": "1d4f8780de5d42f49e75a2e6",
+ "location": "australiaeast"
+}

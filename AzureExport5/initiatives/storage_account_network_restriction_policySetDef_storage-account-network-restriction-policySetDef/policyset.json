@@ -1,0 +1,25 @@
+{
+ "properties": {
+  "displayName": "storage account network restriction policySetDef",
+  "policyType": "Custom",
+  "description": "This is a custom Initiative to restrict Storage Account access",
+  "metadata": {
+   "version": "1.0.0.0",
+   "category": "Custom",
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-21T23:24:22.287453Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "parameters": {},
+  "policyDefinitions": [
+   {
+    "policyDefinitionReferenceId": "13391869758134372953",
+    "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyDefinitions/restrict-public-ips-policyDef"
+   }
+  ]
+ },
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policySetDefinitions/storage-account-network-restriction-policySetDef",
+ "type": "Microsoft.Authorization/policySetDefinitions",
+ "name": "storage-account-network-restriction-policySetDef"
+}
