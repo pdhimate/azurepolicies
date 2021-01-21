@@ -398,7 +398,7 @@ try {
     }
 
     # Display output
-    Write-Output "Deployment of Policies complete"
+    Write-Output "Deployment and Assignment of Policies complete"
 }
 # Global catch
 catch {
