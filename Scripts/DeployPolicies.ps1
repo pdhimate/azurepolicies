@@ -400,7 +400,6 @@ try {
     # Display output
     Write-Output "Deployment of Policies complete"
 }
-
 # Global catch
 catch {
     $errors = $_
