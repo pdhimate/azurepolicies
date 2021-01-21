@@ -62,7 +62,17 @@ param (
 
     [Parameter(Mandatory = $true, ParameterSetName = 'deployToMG')]
     [ValidateNotNullOrEmpty()]
-    [String]$managementGroupName
+    [String]$managementGroupName,
+
+    # Path of the node (Management Group or Subscription) where the Initiative definitions will be stored and assigned.
+    # e.g. /providers/Microsoft.Management/managementGroups/moveme-management-group
+    # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
+    # policy.json will look like: {initiativeLocation}/providers/Microsoft.Authorization/policySetDefinitions/storage-account-network-restriction-policySetDef
+    # this script will replace {initiativeLocation} with the specified value (like shown in e.g.)
+    # If this is not being used just specify the value to be empty string OR do not use {initiativeLocation} in the policySet.json
+    [Parameter(Mandatory = $true, ParameterSetName = 'deployToMG')]
+    [Parameter(Mandatory = $true, ParameterSetName = 'deployToSub')]
+    [String]$initiativeLocation
 )
 
 ##########################################################
@@ -172,9 +182,17 @@ try {
             }
         }
     }
-    $InitiativeDefinitionJsonObj = Convertfrom-Json -InputObject $InitiativeDefinition
 
+    # Replace {initiativeLocation} with the specified one, if any
+    Write-Output "Replacing {initiativeLocation} with $initiativeLocation"
+    $stringToReplace = "{initiativeLocation}" # may be present in the PolicySet.json file
+    if ($InitiativeDefinition.Contains($stringToReplace)) {
+        $InitiativeDefinition = $InitiativeDefinition.Replace($stringToReplace, $initiativeLocation)
+        Write-Output ("Replaced " + "$stringToReplace :" + $initiativeLocation)
+    }
+    
     # Validate definition content
+    $InitiativeDefinitionJsonObj = Convertfrom-Json -InputObject $InitiativeDefinition
     Write-Output "Validating Initiative Definition"
     if ($InitiativeDefinitionJsonObj.properties.policyDefinitions) {
         Write-Output "'$definitionFile' is a policy initiative definition. It will be deployed."

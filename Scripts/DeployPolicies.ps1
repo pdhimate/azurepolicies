@@ -54,11 +54,11 @@ param (
     # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
     # policy.json will look like: {policyLocation}/providers/Microsoft.Authorization/policyDefinitions/d2f5bb15-8bab-447a-8109-acac05f8ec88
     # this script will replace {policyLocation} with the specified value (like shown in e.g.)
+    # If this is not being used just specify the value to be empty string OR do not use {policyLocation} in the policy.json
     [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToMG')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployDirToMG')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployFilesToSub')]
     [Parameter(Mandatory = $true, ParameterSetName = 'deployDirToSub')]
-    [ValidateNotNullOrEmpty()] # must not be null or empty white space
     [String]$policyLocation
 )
 
@@ -172,9 +172,9 @@ try {
         Write-Output "Parsing '$file'..."
         $rawFile = Get-Content -path $file -Raw 
         
-        # Replace {policyLocation} with the specified one
+        # Replace {policyLocation} with the specified one, if any
         Write-Output "Replacing {policyLocation} with $policyLocation"
-        $stringToReplace = "{policyLocation}" # may be present in the Policy def json file
+        $stringToReplace = "{policyLocation}" # may be present in the Policy.json file
         if ($rawFile.Contains($stringToReplace)) {
             $rawFile = $rawFile.Replace($stringToReplace, $policyLocation)
             Write-Output ("Replaced " + "$stringToReplace :" + $policyLocation)

@@ -10,7 +10,7 @@
             "request": "launch",
             "script": "${workspaceFolder}/DeployInitiative.ps1",
             "args": [
-                "-definitionFile C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\initiatives\\storage-account-network-restriction-policySetDef\\policySet.json -managementGroupName moveme-management-group -PolicyLocations @{restrict-public-ips-policyDef-Location = '/providers/Microsoft.Management/managementGroups/moveme-management-group'}"
+                "-definitionFile 'C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\initiatives\\storage_account_network_restriction_policySetDef_storage-account-network-restriction-policySetDef/policySet.json' -managementGroupName moveme-management-group -initiativeLocation '/providers/Microsoft.Management/managementGroups/moveme-management-group' -PolicyLocations @{'restrict-public-ips-policyDef-Location' = '/providers/Microsoft.Management/managementGroups/moveme-management-group'}"
             ],
             "cwd": "${workspaceFolder}"
         },
