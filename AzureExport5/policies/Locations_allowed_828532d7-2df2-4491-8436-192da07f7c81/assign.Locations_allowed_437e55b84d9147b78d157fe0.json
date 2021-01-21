@@ -1,0 +1,43 @@
+{
+ "sku": {
+  "name": "A0",
+  "tier": "Free"
+ },
+ "properties": {
+  "displayName": "Locations allowed",
+  "policyDefinitionId": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyDefinitions/828532d7-2df2-4491-8436-192da07f7c81",
+  "scope": "/providers/Microsoft.Management/managementGroups/moveme-management-group",
+  "notScopes": [],
+  "parameters": {
+   "allowedLocations": {
+    "value": [
+     "australia",
+     "australiacentral",
+     "australiacentral2",
+     "australiaeast",
+     "australiasoutheast"
+    ]
+   }
+  },
+  "metadata": {
+   "assignedBy": "Piyush Dhimate",
+   "parameterScopes": {
+    "allowedLocations": "/providers/Microsoft.Management/managementGroups/moveme-management-group"
+   },
+   "createdBy": "639e9944-25c6-4f24-aa81-585b1f0990a1",
+   "createdOn": "2021-01-21T02:22:45.8707674Z",
+   "updatedBy": null,
+   "updatedOn": null
+  },
+  "enforcementMode": "Default"
+ },
+ "identity": {
+  "principalId": "d0cd7218-adc2-478e-9cd3-4384561321b7",
+  "tenantId": "e68a317f-d4e8-4c7a-bf89-8ec20c8db96f",
+  "type": "SystemAssigned"
+ },
+ "id": "/providers/Microsoft.Management/managementGroups/moveme-management-group/providers/Microsoft.Authorization/policyAssignments/437e55b84d9147b78d157fe0",
+ "type": "Microsoft.Authorization/policyAssignments",
+ "name": "437e55b84d9147b78d157fe0",
+ "location": "australiaeast"
+}
