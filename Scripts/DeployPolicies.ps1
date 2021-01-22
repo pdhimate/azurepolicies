@@ -303,12 +303,11 @@ try {
             Write-Output ("Replaced " + "$stringToReplace :" + $policyLocation)
         }
        
-        # Try to get all adjacent assignment files
+        # Try to get all adjacent assignment files (*policy.assignment.json)
         $folder = Split-Path -parent $file
         $assignmentFiles = (Get-ChildItem -Path $folder -File -Filter '*policy.assignment.json').FullName
         $assignmentDefJsonObjs = @()
         foreach ($assignmentFile in $assignmentFiles) {
-            
             # Read assignment file
             $rawAssignment = $null
             if ([System.IO.File]::Exists($assignmentFile)) {
@@ -319,7 +318,7 @@ try {
             }
 
             # Replace {policyLocation} in policy.assignment.json with the specified one, if any
-            Write-Output "Replacing {policyLocation} with $policyLocation in policy.assignment.json"
+            Write-Output "Replacing {policyLocation} with $policyLocation in $assignmentFile"
             $stringToReplace = "{policyLocation}" # may be present in the *policy.assignment.json file
             if ($rawAssignment.Contains($stringToReplace)) {
                 $rawAssignment = $rawAssignment.Replace($stringToReplace, $policyLocation)
@@ -337,7 +336,7 @@ try {
             Write-Error "'$file' is a policy initiative definition which is not supported by this script."
         }
         elseif ($objDef.properties.policyRule) {
-            Write-Output "'$file' contains a policy definition"
+            Write-Output "'$file' contains a valid policy definition"
             $def = @{
                 PolicyDefJsonObj = $objDef;
             }
@@ -363,11 +362,11 @@ try {
             Definition = $def.PolicyDefJsonObj
         }
         if ($PSCmdlet.ParameterSetName -eq 'deployDirToSub' -or $PSCmdlet.ParameterSetName -eq 'deployFilesToSub') {
-            Write-Output "Deploying policy '$($def.name)' to subscription '$subscriptionId'"
+            Write-Output "Deploying policy '$($def.PolicyDefJsonObj.name)' to subscription '$subscriptionId'"
             $params.Add('subscriptionId', $subscriptionId)
         }
         else {
-            Write-Output "Deploying policy '$($def.name)' to management group '$managementGroupName'"
+            Write-Output "Deploying policy '$($def.PolicyDefJsonObj.name)' to management group '$managementGroupName'"
             $params.Add('managementGroupName', $managementGroupName)
         }
         $PolicyOutput = New-Object -TypeName Hashtable
@@ -382,7 +381,7 @@ try {
         $deployedCount++
 
         # Assign definitions, if any assignment file(s) were found
-       Write-Output "Assiging Policies if any Assignment files are present adjacent to the policy.json file"
+        Write-Output "Assiging Policies if any Assignment files are present adjacent to the policy.json file"
         foreach ($assignmentDefJsonObj in $def.AssignmentDefJsonObjs) {
             $assignmentOutput = New-Object -TypeName Hashtable
             AssignPolicyDefinition -PolicyLocation $policyLocation `

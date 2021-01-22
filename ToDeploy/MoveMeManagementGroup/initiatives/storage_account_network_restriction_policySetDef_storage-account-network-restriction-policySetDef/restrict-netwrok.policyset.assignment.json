@@ -1,0 +1,17 @@
+{
+  "properties": {
+    "displayName": "storage account network restriction policySetDef",
+    "policyDefinitionId": "{initiativeLocation}/providers/Microsoft.Authorization/policySetDefinitions/storage-account-network-restriction-policySetDef",
+    "scope": "{initiativeLocation}",
+    "notScopes": [
+      "/subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2"
+    ],
+    "parameters": {},
+    "enforcementMode": "Default"
+  },
+  "identity": {
+    "type": "SystemAssigned"
+  },
+  "name": "restriction-policySetDef",
+  "location": "australiaeast"
+}

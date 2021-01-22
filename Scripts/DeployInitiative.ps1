@@ -2,7 +2,7 @@
   .SYNOPSIS
     Deploy Initiative (policy set) definition.
   .DESCRIPTION
-    This script deploys Azure Policy Initiative (policy set) definition.
+    This script deploys Azure Policy Initiative (policy set) definition ans assigns the adjacent *policyset.assignment.json files in the same scope
   .PARAMETER DefinitionFile
     path to the Policy Initiative Definition file.
   .PARAMETER PolicyLocations
@@ -147,6 +147,128 @@ function DeployInitiativeDefinition {
     }
 }
 
+
+function AssignInitiativeDefinition {
+    param (
+        # Path of the node (Management Group or Subscription) where the Initiative will be stored
+        # This is also the Scope where the Policy would be assigned
+        # e.g. /providers/Microsoft.Management/managementGroups/moveme-management-group
+        # e.g. /subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2
+        [Parameter(Mandatory = $true)]
+        [string]$InitiativeLocation,
+        [object]$AssignmentJsonObj, 
+        [Hashtable]$Output
+    )
+    ## Validate mandatory values from policy.assignment.json 
+    $initiativeDefinitionId = $AssignmentJsonObj.properties.policyDefinitionId
+    if (!$initiativeDefinitionId) {
+        Write-Error "policyset.assignment.json file must contain a properties.policyDefinitionId property"
+    }
+    $scope = $AssignmentJsonObj.properties.scope
+    if (!$scope) {
+        Write-Error "policyset.assignment.json file must contain a properties.scope property"
+    }
+    $enforcementMode = $AssignmentJsonObj.properties.enforcementMode
+    if (!$enforcementMode) {
+        Write-Error "policyset.assignment.json file must contain a properties.enforcementMode property"
+    }
+    $name = $AssignmentJsonObj.name
+    if (!$name) {
+        Write-Error "policyset.assignment.json file must contain a name property"
+    }
+    $displayName = $AssignmentJsonObj.properties.displayName
+    if (!$displayName) {
+        Write-Error "policyset.assignment.json file must contain a properties.displayName property"
+    }
+
+    ## Optional values
+    $notScopes = $AssignmentJsonObj.properties.notScopes # Array of strings with scopes to be excluded
+    $parameters = $AssignmentJsonObj.properties.parameters    # Policy parameters values json obj
+    $location = $AssignmentJsonObj.location    # ManagedIdentity Location, if any
+    
+    # Assigned Identity and Location
+    $isSystemIdentity = $AssignmentJsonObj.identity.type -eq "SystemAssigned"
+    if ($isSystemIdentity) {
+        if (!$location) {
+            Write-Error "policyset.assignment.json file must contain a location property if it contains identity property"
+        }
+    }
+
+    # Replace {initiativeLocation} from the *policyset.assignment.json
+    $locationStringToReplace = "{initiativeLocation}"
+    if ($initiativeDefinitionId.Contains($locationStringToReplace)) {
+        $initiativeDefinitionId = $initiativeDefinitionId.Replace($locationStringToReplace, $InitiativeLocation)
+        Write-Output "Replaced $stringToReplace with $InitiativeLocation in Assignment"
+    }
+
+    # Locate the PolicySetDefinition, use Where since the cmdlet returns all policies if it does not find a matching one
+    Write-Output "Finding Initiative: $initiativeDefinitionId"
+    $initiative = Get-AzPolicySetDefinition -Id $initiativeDefinitionId | Where-Object { $_.PolicySetDefinitionId -eq $initiativeDefinitionId }
+    Write-Output "Found Initiative: "
+    $initiative
+
+    # Create params splat
+    $assignmentParams = @{
+        Name                = $name;
+        DisplayName         = $displayName;
+        Scope               = $scope;
+        PolicySetDefinition = $initiative;
+        Location            = $location;
+    }
+    # parameters obj must be converted to Hashtable
+    $assignmentParams.PolicyParameterObject = ConvertPSObjectToHashtable $parameters
+
+    # Set optional params which must not be specified if null or empty
+    if ($isSystemIdentity) {
+        $assignmentParams.AssignIdentity = $true
+    }
+    if ($notScopes) { 
+        $assignmentParams.NotScope = $notScopes
+    }
+
+    # Assign policy
+    Write-Output "Creating Assignment with parameters:" 
+    $assignmentParams
+    $assignment = New-AzPolicyAssignment @assignmentParams
+    Write-Output "Assignment complete: "
+    $assignment
+
+    # Set output
+    if ($Output) {
+        $Output.Assignment = $assignment
+    }
+}
+
+
+function ConvertPSObjectToHashtable {
+    param (
+        [Parameter(ValueFromPipeline)]
+        $InputObject
+    )
+
+    if ($null -eq $InputObject) { return $null }
+
+    if ($InputObject -is [System.Collections.IEnumerable] -and $InputObject -isnot [string]) {
+        $collection = @(
+            foreach ($object in $InputObject) { ConvertPSObjectToHashtable $object }
+        )
+
+        Write-Output -NoEnumerate $collection
+    }
+    elseif ($InputObject -is [psobject]) {
+        $hash = @{}
+
+        foreach ($property in $InputObject.PSObject.Properties) {
+            $hash[$property.Name] = ConvertPSObjectToHashtable $property.Value
+        }
+
+        $hash
+    }
+    else {
+        $InputObject
+    }
+}
+
 ##########################################################
 # Local functions end
 ##########################################################
@@ -191,11 +313,38 @@ try {
         Write-Output ("Replaced " + "$stringToReplace :" + $initiativeLocation)
     }
     
+    # Try to get all adjacent assignment files (*policyset.assignment.json)
+    $folder = Split-Path -parent $definitionFile
+    $assignmentFiles = (Get-ChildItem -Path $folder -File -Filter '*policyset.assignment.json').FullName
+    $assignmentDefJsonObjs = @()
+    foreach ($assignmentFile in $assignmentFiles) {
+        # Read assignment file
+        $rawAssignment = $null
+        if ([System.IO.File]::Exists($assignmentFile)) {
+            $rawAssignment = Get-Content -path $assignmentFile -Raw
+        }
+        if (!$rawAssignment) {
+            continue
+        }
+
+        # Replace {initiativeLocation} in policy.assignment.json with the specified one, if any
+        Write-Output "Replacing {initiativeLocation} with $initiativeLocation in $assignmentFile"
+        $stringToReplace = "{initiativeLocation}" # may be present in the *policyset.assignment.json file
+        if ($rawAssignment.Contains($stringToReplace)) {
+            $rawAssignment = $rawAssignment.Replace($stringToReplace, $initiativeLocation)
+            Write-Output ("Replaced " + "$stringToReplace :" + $initiativeLocation)
+        }
+
+        # Convert to json obj and store in array 
+        $assignmentDefJsonObj = Convertfrom-Json -InputObject $rawAssignment
+        $assignmentDefJsonObjs += $assignmentDefJsonObj
+    } 
+   
     # Validate definition content
     $InitiativeDefinitionJsonObj = Convertfrom-Json -InputObject $InitiativeDefinition
     Write-Output "Validating Initiative Definition"
     if ($InitiativeDefinitionJsonObj.properties.policyDefinitions) {
-        Write-Output "'$definitionFile' is a policy initiative definition. It will be deployed."
+        Write-Output "'$definitionFile' is a valid policy initiative definition"
     }
     elseif ($InitiativeDefinitionJsonObj.properties.policyRule) {
         Write-Error "'$definitionFile' contains a policy definition which is not supported by this script."
@@ -203,23 +352,50 @@ try {
     else {
         Write-Error "Unable to parse '$definitionFile'. It is not a policy or initiative definition file. Content unrecognised."
     }
-
+ 
     # Deploy Initiative
+    $deployOutputs = @()
+    $deployedCount = 0;
+    $assignedCount = 0;
     $params = @{
         Definition = $InitiativeDefinitionJsonObj
     }
     if ($PSCmdlet.ParameterSetName -eq 'deployToSub') {
+        Write-Output "Deploying Initiative '$($InitiativeDefinitionJsonObj.name)' to subscription '$subscriptionId'"
         $params.Add('subscriptionId', $subscriptionId)
     }
     else {
+        Write-Output "Deploying Initiative '$($InitiativeDefinitionJsonObj.name)' to management group '$managementGroupName'"
         $params.Add('managementGroupName', $managementGroupName)
     }
-    $Output = New-Object -TypeName Hashtable
-    $params.Add('Output', $Output)
+    $initiativeOutput = New-Object -TypeName Hashtable
+    $params.Add('Output', $initiativeOutput)
     DeployInitiativeDefinition @params
     
+    # Create output
+    $Output = @{
+        InitiativeOutput  = $initiativeOutput;
+        AssignmentOutputs = @();
+    }
+    $deployedCount++
+
+    # Assign definitions, if any assignment file(s) were found
+    Write-Output "Assiging Initiatives if any Assignment files are present adjacent to the *policyset.json file"
+    foreach ($assignmentDefJsonObj in $assignmentDefJsonObjs) {
+        $assignmentOutput = New-Object -TypeName Hashtable
+        AssignInitiativeDefinition -InitiativeLocation $initiativeLocation `
+            -AssignmentJsonObj $assignmentDefJsonObj `
+            -Output $assignmentOutput
+
+        $Output.AssignmentOutputs += $assignmentOutput
+        $assignedCount++
+    }
+
+    $deployOutputs += $Output
+    Write-Output "Deployed $deployedCount Initiatives and Assigned $assignedCount Initiatives"
+
     # Display output
-    Write-Output "Deployment of Intiative complete"
+    Write-Output "Deployment and Assignment of Initiative complete"
 }
 
 # Global catch
