@@ -277,12 +277,12 @@ try {
             -or $PSCmdlet.ParameterSetName -eq 'deployDirToSub') {
         Write-Output "Folder path: '$folderPath'"
         if ($Recurse) {
-            Write-Output "Recursing through all *.json files in the folder and its sub-folders."
+            Write-Output "Recursing through all *policy.json files in the folder and its sub-folders."
             $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*policy.json' -Recurse).FullName
             Write-Output "Found $($definitionFiles.count) *policy.json files"
         }
         else {
-            Write-Output "Retrieving all *.json files in the folder."
+            Write-Output "Retrieving all *policy.json files in the folder."
             $definitionFiles = (Get-ChildItem -Path $folderPath -File -Filter '*policy.json').FullName
             Write-Output "Found $($definitionFiles.count) *policy.json files"
         }
