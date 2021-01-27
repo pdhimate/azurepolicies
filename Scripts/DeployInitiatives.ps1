@@ -320,10 +320,11 @@ try {
         $InitiativeDefinition = Get-Content -path $definitionFile -Raw
     
         # Try to get policy definition locations file, if any (policyset.policydeflocations.json)
-        $policyDefLocationsFile = (Get-ChildItem -Path $currFolderPath -File -Filter 'policyset.policydeflocations.json').FullName
-        if ($policyDefLocationsFile) {
+        $policyDefLocationsFilePath = (Get-ChildItem -Path $currFolderPath -File -Filter 'policyset.policydeflocations.json').FullName
+        if ($policyDefLocationsFilePath) {
             # Replace policy definition location resource Ids
-            $policyDefLocations = Convertfrom-Json -InputObject $InitiativeDefinition -AsHashtable
+            $policyDefLocationsFile = Get-Content -path $policyDefLocationsFilePath -Raw
+            $policyDefLocations = Convertfrom-Json -InputObject $policyDefLocationsFile -AsHashtable
             Write-Output "Replacing dynamic PolicyLocations in the Initiative Definition file"
             foreach ($key in $policyDefLocations.Keys) {
                 $stringToReplace = "{$key}" # may be present in the Initiative def json file

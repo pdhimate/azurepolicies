@@ -8,7 +8,7 @@
             "name": "Local Debug: Deploy Initiative to MG",
             "type": "PowerShell",
             "request": "launch",
-            "script": "${workspaceFolder}/DeployInitiative.ps1",
+            "script": "${workspaceFolder}/Scripts/DeployInitiative.ps1",
             "args": [
                 "-definitionFile 'C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\initiatives\\storage_account_network_restriction_policySetDef_storage-account-network-restriction-policySetDef/policySet.json' -managementGroupName moveme-management-group -initiativeLocation '/providers/Microsoft.Management/managementGroups/moveme-management-group' -PolicyLocations @{'restrict-public-ips-policyDef-Location' = '/providers/Microsoft.Management/managementGroups/moveme-management-group'}"
             ],
@@ -18,9 +18,19 @@
             "name": "Local Debug: Deploy Initiative to Subscription",
             "type": "PowerShell",
             "request": "launch",
-            "script": "${workspaceFolder}/DeployInitiative.ps1",
+            "script": "${workspaceFolder}/Scripts/DeployInitiative.ps1",
             "args": [
                 "-definitionFile 'C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\initiatives\\storage_account_network_restriction_policySetDef_storage-account-network-restriction-policySetDef/policySet.json' -subscriptionId ffad927d-ae53-4617-a608-b0e8e7544bd2 -initiativeLocation '/subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2' -PolicyLocations @{'restrict-public-ips-policyDef-Location' = '/providers/Microsoft.Management/managementGroups/moveme-management-group'}"
+            ],
+            "cwd": "${workspaceFolder}"
+        },
+        {
+            "name": "Local Debug: Deploy Initiatives to MG",
+            "type": "PowerShell",
+            "request": "launch",
+            "script": "${workspaceFolder}/Scripts/DeployInitiatives.ps1",
+            "args": [
+                "-FolderPath C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\initiatives -recurse -managementGroupName moveme-management-group -initiativeLocation '/providers/Microsoft.Management/managementGroups/moveme-management-group'"
             ],
             "cwd": "${workspaceFolder}"
         },
@@ -28,7 +38,7 @@
             "name": "Local Debug: Deploy Policies to MG",
             "type": "PowerShell",
             "request": "launch",
-            "script": "${workspaceFolder}/DeployPolicies.ps1",
+            "script": "${workspaceFolder}/Scripts/DeployPolicies.ps1",
             "args": [
                 "-FolderPath C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\MoveMeManagementGroup\\policies -recurse -managementGroupName moveme-management-group -policyLocation '/providers/Microsoft.Management/managementGroups/moveme-management-group'"
             ],
@@ -38,7 +48,7 @@
             "name": "Local Debug: Deploy Policies to Subscription",
             "type": "PowerShell",
             "request": "launch",
-            "script": "${workspaceFolder}/DeployPolicies.ps1",
+            "script": "${workspaceFolder}/Scripts/DeployPolicies.ps1",
             "args": [
                 "-FolderPath C:\\Work\\GitHub\\azurepolicies\\ToDeploy\\Dev-Test-Subscription\\policies -recurse -subscriptionId ffad927d-ae53-4617-a608-b0e8e7544bd2 -policyLocation '/subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2'"
             ],
