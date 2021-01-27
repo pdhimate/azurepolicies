@@ -1,45 +1,25 @@
 <#
   .SYNOPSIS
-    Deploy Initiative (policy set) definition.
+    Deploys Initiatives (policy set) definitions.
   .DESCRIPTION
-    This script deploys Azure Policy Initiative (policy set) definition ans assigns the adjacent *policyset.assignment.json files in the same scope
-  .PARAMETER DefinitionFile
-    path to the Policy Initiative Definition file.
-  .PARAMETER PolicyLocations
-    When the policy initiative contains custom policies, instead of hardcoding the policy definition resource Id, use a string to represent the location (resource Id to a subscription or a management group where the policy definition resides.) and replace this string with the value specified in this parameter. See Example for detailed usage
+    This script deploys Azure Policy Initiative (policy set) definition and assigns the adjacent *policyset.assignment.json files in the same scope. It also uses adjacent policyset.policydeflocations.json to dynamically replace policy definition locations within the *policyset.json file
+  .PARAMETER DefinitionFiles
+    paths to the Policy Initiative Definition files.
+  .PARAMETER folderPath
+    paths to the folder conatining Initiative Definition file(s).
   .PARAMETER subscriptionId
     When deploying the policy initiative definition to a subscription, specify the subscription Id.
   .PARAMETER managementGroupName
     When deploying the policy initiative definition to a management group, specify the management group name (not the display name).
   .EXAMPLE
-    ./DeployInitiatives.ps1 -definitionFile C:\Temp\azurepolicyset.json -subscriptionId fd16c044-18c4-4abe-a908-1e0b79f45003
+    ./DeployInitiatives.ps1 -definitionFiles @("C:\Temp\azurepolicyset.json") -subscriptionId fd16c044-18c4-4abe-a908-1e0b79f45003 -initiativeLocation '/subscriptions/ffad927d-ae53-4617-a608-b0e8e7544bd2'
     Deploy a policy initiative definition to a subscription (interactive mode)
   .EXAMPLE
-    ./DeployInitiative.ps1 -definitionFile C:\Temp\azurepolicyset.json -managementGroupName myMG 
+    ./DeployInitiatives.ps1 -definitionFiles @("C:\Temp\azurepolicyset.json") -managementGroupName MyMgG -initiativeLocation '/providers/Microsoft.Management/managementGroups/moveme-management-group'
     Deploy a policy initiative definition to a management group 
   .EXAMPLE
-    ./DeployInitiative.ps1 -definitionFile C:\Temp\azurepolicyset.json -managementGroupName myMG -PolicyLocations @{policyLocationResourceId1 = '/providers/Microsoft.Management/managementGroups/MyMG'}
-    Deploy a policy initiative definition to a management group and replace the policy location from the definition file as shown below:
-    {
-        "name": "storage-account-network-restriction-policySetDef",
-        "properties": {
-            "displayName": "My Initiative Name",
-            "description": "This is a custom Initiative to restrict Storage Account access",
-            "metadata": {
-                "version" : "1.0.0.0",
-                "category": "Custom"
-            },
-            "parameters": {},
-            "policyDefinitions": [
-                {
-                    "policyDefinitionId": "{policyLocation1}/providers/Microsoft.Authorization/policyDefinitions/custom1-policyDef"
-                },
-                {
-                    "policyDefinitionId": "{policyLocation2}/providers/Microsoft.Authorization/policyDefinitions/custom2-policyDef"
-                }
-            ]
-        }
-    }
+    ./DeployInitiatives.ps1 -folderPath @("C:\Temp\initiatives") -managementGroupName MyMgG -initiativeLocation '/providers/Microsoft.Management/managementGroups/moveme-management-group' -recurse
+    Deploys a initiative definitions recursively to the management group and location
 #>
 
 #Requires -Modules 'az.resources'
