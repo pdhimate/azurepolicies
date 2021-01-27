@@ -297,7 +297,7 @@ try {
     if ($dynamicPolicyLocationsSupplied) {
         Write-Output "Replacing dynamic PolicyLocations in the Initiative Definition file"
         foreach ($key in $PolicyLocations.Keys) {
-            $stringToReplace = "{$key}" # must be present in the Initiative def json file
+            $stringToReplace = "{$key}" # may be present in the Initiative def json file
             if ($InitiativeDefinition.Contains($stringToReplace)) {
                 $InitiativeDefinition = $InitiativeDefinition.Replace($stringToReplace, $PolicyLocations.$key)
                 Write-Output ("Replaced " + "$stringToReplace :" + $PolicyLocations.$key)
